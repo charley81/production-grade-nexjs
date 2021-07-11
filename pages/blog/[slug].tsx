@@ -65,7 +65,7 @@ export function getStaticPaths() {
   }
 }
 
-export function getStaticProps({params}) {
+export async function getStaticProps({params}) {
   let post
   try {
     const filesPath = path.join(process.cwd(), 'posts', `${params.slug}` + '.mdx')
@@ -73,11 +73,21 @@ export function getStaticProps({params}) {
      
   } catch {
     const cmsPosts = posts.published.map(p => {
-      const {data} = matter(p)
-      return data
+      return matter(p)
     })
 
-    const match = cmsPosts.find(p => p.slug === params.slug)
+    const match = cmsPosts.find(p => p.data.slug === params.slug)
+    post = match.content
+  }
+
+  const {data} = matter(post)
+  const mdxSource = await renderToString(post, {scope: data})
+
+  return {
+    props: {
+      source: mdxSource,
+      frontMatter: data
+    }
   }
 }
 
